@@ -12,9 +12,11 @@ class RoutingService:
     def _calc_matrix_from_coordinates(self, coordinates):
         result = {}
         for source in coordinates:
+            if str(source) not in result:
+                result[str(source)] = {}
             for target in coordinates:
-                if str(source) not in result:
-                    result[str(source)] = {}
-                result[str(source)][str(target)] = self._direct_connection(source[0], source[1], target[0], target[1])
+                if source != target:
+                    result[str(source)][str(target)] = self._direct_connection(source[0], source[1], target[0],
+                                                                               target[1])
 
         return result

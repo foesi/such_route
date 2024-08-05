@@ -6,6 +6,10 @@ import pickle
 
 from brouter import Brouter
 
+DEST_COORDS = '(7.44411, 46.9469)'
+# two days in seconds
+UNREACHABLE = 172800
+
 if __name__ == '__main__':
     '''
     This script creates a distance matrix between given checkpoints defined by latitude and longitude
@@ -32,11 +36,16 @@ if __name__ == '__main__':
                 continue
             checkpoints.append({'longitude': float(line[1]), 'latitude': float(line[0]), 'canton': line[2]})
 
-    coordinates = map(lambda x: (x['longitude'], x['latitude']), checkpoints)
+    coordinates = list(map(lambda x: (x['longitude'], x['latitude']), checkpoints))
 
     routing_service = Brouter()
 
     result_matrix = routing_service.matrix(coordinates)
+
+    # make the time to reach any destination from the final destination Bundesplatz in bern very large, so it will be
+    # the final destionation for sure
+    for unreachable_target in result_matrix[DEST_COORDS]:
+        result_matrix[DEST_COORDS][unreachable_target] = UNREACHABLE
 
     print('save cache')
     with open('.such_route_cache', 'wb') as f:
