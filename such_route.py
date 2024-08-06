@@ -5,10 +5,16 @@ import os
 import pickle
 
 from brouter import Brouter
+from valhalla import Valhalla
+
 
 DEST_COORDS = '(7.44411, 46.9469)'
 # two days in seconds
 UNREACHABLE = 172800
+
+# backends
+BROUTER = 'brouter'
+VALHALLA = 'valhalla'
 
 if __name__ == '__main__':
     '''
@@ -18,6 +24,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-f', '--filename', type=str,
                         help='The checkpoint csv file', required=True)
+    parser.add_argument('-b', '--backend', type=str, choices=[BROUTER, VALHALLA], default=VALHALLA,
+                        help='The routing backend')
 
     args = parser.parse_args()
 
@@ -38,12 +46,19 @@ if __name__ == '__main__':
 
     coordinates = list(map(lambda x: (x['longitude'], x['latitude']), checkpoints))
 
-    routing_service = Brouter()
+    if args.backend == BROUTER:
+        routing_backend = Brouter
+    elif args.backend == VALHALLA:
+        routing_backend = Valhalla
+    else:
+        routing_backend = Valhalla
+
+    routing_service = routing_backend()
 
     result_matrix = routing_service.matrix(coordinates)
 
     # make the time to reach any destination from the final destination Bundesplatz in bern very large, so it will be
-    # the final destionation for sure
+    # the final destination for sure
     for unreachable_target in result_matrix[DEST_COORDS]:
         result_matrix[DEST_COORDS][unreachable_target] = UNREACHABLE
 
