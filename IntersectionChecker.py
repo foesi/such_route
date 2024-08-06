@@ -95,19 +95,20 @@ class CheckIntersectionRouteCanton:
         # Show plot
         plt.show()
 
+
 if __name__ == "__main__":
     # draw is only for the debugging!
-    #myCheck = CheckIntersectionRouteCanton(True,['CH-ZH','CH-GE','CH-VS'])
+    # myCheck = CheckIntersectionRouteCanton(True,['CH-ZH','CH-GE','CH-VS'])
     myCheck = CheckIntersectionRouteCanton(True)
 
-    myCheck.Check('brouter.geojson','CH-VS')
+    myCheck.Check('test/brouter.geojson', 'CH-VS')
 
-    myCheck.Check('BellizonaGenf.geojson','CH-VS')
-    myCheck.Check('ZurichGenf.geojson','CH-VS')
+    myCheck.Check('test/BellizonaGenf.geojson', 'CH-VS')
+    myCheck.Check('test/ZurichGenf.geojson', 'CH-VS')
 
-    myCheck.Check('BellizonaGenf.geojson','CH-ZH')
-    myCheck.Check('ZurichGenf.geojson','CH-ZH')
+    myCheck.Check('test/BellizonaGenf.geojson', 'CH-ZH')
+    myCheck.Check('test/ZurichGenf.geojson', 'CH-ZH')
 
-    myCheck.Check('BellizonaGenf.geojson','CH-GE')
-    myCheck.Check('ZurichGenf.geojson','CH-GE')
+    myCheck.Check('test/BellizonaGenf.geojson', 'CH-GE')
+    myCheck.Check('test/ZurichGenf.geojson', 'CH-GE')
 
