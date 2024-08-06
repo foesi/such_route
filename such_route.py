@@ -42,7 +42,9 @@ if __name__ == '__main__':
         for i, line in enumerate(checkpoint_reader):
             if i == 0:
                 continue
-            checkpoints.append({'longitude': float(line[1]), 'latitude': float(line[0]), 'canton': line[2]})
+            checkpoints.append(
+                {'longitude': float(line[1]), 'latitude': float(line[0]), 'group': line[2], 'code': line[3],
+                 'canton': line[4]})
 
     coordinates = list(map(lambda x: (x['longitude'], x['latitude']), checkpoints))
 
