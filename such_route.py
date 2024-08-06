@@ -4,8 +4,8 @@ import json
 import os
 import pickle
 
-from brouter import Brouter
-from valhalla import Valhalla
+from routing.brouter import Brouter
+from routing.valhalla import Valhalla
 
 
 DEST_COORDS = '(7.44411, 46.9469)'
