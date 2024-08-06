@@ -14,8 +14,8 @@ class Valhalla(RoutingService):
         json_request = {'locations': [{'lat': source_lat, 'lon': source_lon},
                                       {'lat': target_lat, 'lon': target_lon}],
                         'costing': 'bicycle'}
-        if not self.ferries:
-            # avoid ferries if configured
+        if not self._use_ferries:
+            # avoid _use_ferries if configured
             json_request['costing_options'] = {'bicycle': {'use_ferry': 0}}
         response = requests.get(f'http://localhost:8002/route?json={json.dumps(json_request)}')
         result = json.load(io.BytesIO(response.content))

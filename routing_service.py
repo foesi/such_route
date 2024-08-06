@@ -1,7 +1,16 @@
+from caching import Cache
+
+
+DEST_COORDS = '(7.44411, 46.9469)'
+# two days in seconds
+UNREACHABLE = 172800
+
+
 class RoutingService:
-    def __init__(self, ferries=True, nogos=None):
-        self.ferries = ferries
-        self.nogos = nogos
+    def __init__(self, cache: Cache, ferries=False, nogos=None):
+        self.cache = cache
+        self._use_ferries = ferries
+        self._nogos = nogos
 
     def matrix(self, coordinates):
         raise NotImplementedError()
@@ -9,14 +18,27 @@ class RoutingService:
     def _direct_connection(self, source_lon, source_lat, target_lon, target_lat):
         raise NotImplementedError()
 
+    def _cache_or_connection(self, source_lon, source_lat, target_lon, target_lat):
+        if cache_hit := self.cache.get((source_lon, source_lat), (target_lon, target_lat)):
+            return cache_hit
+        result = self._direct_connection(source_lon, source_lat, target_lon, target_lat)
+        self.cache.set(result, (source_lon, source_lat), (target_lon, target_lat), self._nogos)
+        return result
+
     def _calc_matrix_from_coordinates(self, coordinates):
         result = {}
         for source in coordinates:
             if str(source) not in result:
                 result[str(source)] = {}
             for target in coordinates:
-                if source != target:
-                    result[str(source)][str(target)] = self._direct_connection(source[0], source[1], target[0],
-                                                                               target[1])
+                if source != target and str(source) != DEST_COORDS:
+                    result[str(source)][str(target)] = self._cache_or_connection(source[0], source[1], target[0],
+                                                                                 target[1])
+
+        # make the time to reach any destination from the final destination Bundesplatz in bern very large, so it will
+        # be the final destination for sure
+        for unreachable_target in coordinates:
+            if str(unreachable_target) != DEST_COORDS:
+                result[DEST_COORDS][str(unreachable_target)] = UNREACHABLE
 
         return result
