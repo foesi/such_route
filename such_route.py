@@ -3,6 +3,7 @@ import csv
 import json
 
 from caching import Cache
+from data import Canton
 from routing.brouter import Brouter
 from routing.valhalla import Valhalla
 
@@ -35,7 +36,7 @@ if __name__ == '__main__':
                 {'longitude': float(line[1]), 'latitude': float(line[0]), 'group': line[2], 'code': line[3],
                  'canton': line[4]})
 
-    coordinates = list(map(lambda x: (x['longitude'], x['latitude']), checkpoints))
+    coordinates = [(x['longitude'], x['latitude']) for x in checkpoints]
 
     if args.backend == BROUTER:
         routing_backend = Brouter
@@ -46,6 +47,8 @@ if __name__ == '__main__':
 
     cache = Cache('.such_route_cache', args.backend)
     cache.load()
+
+    cantons = {i['code']: Canton(i['code'], cache) for i in checkpoints}
 
     routing_service = routing_backend(cache)
 

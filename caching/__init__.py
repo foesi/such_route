@@ -68,3 +68,21 @@ class Cache:
         """
         key = self._get_key(start, dest, cantons)
         self._cache[key] = value
+
+    def set_generic(self, key, value):
+        """
+        Generic set function for the cache. The key is just passed through.
+        :param key: Cache key
+        :param value: Value to be set
+        """
+        self._cache[key] = value
+
+    def get_generic(self, key):
+        """
+        Generic get function for the key. The key ist just passed through.
+        :param key: Cache key
+        :return: value on cache hit, None otherwise
+        """
+        if key in self._cache:
+            return self._cache[key]
+        return None
