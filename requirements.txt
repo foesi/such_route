@@ -3,3 +3,6 @@ OSMPythonTools
 geojson
 shapely
 matplotlib
+gurobipy
+folium
+seaborn
