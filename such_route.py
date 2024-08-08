@@ -1,9 +1,11 @@
 import argparse
 import csv
 import json
+import os
 
 from caching import Cache
 from data import Canton
+from data.scrambling import Scrambler
 from routing.brouter import Brouter
 from routing.valhalla import Valhalla
 
@@ -36,8 +38,6 @@ if __name__ == '__main__':
                 {'longitude': float(line[1]), 'latitude': float(line[0]), 'group': line[2], 'code': line[3],
                  'canton': line[4]})
 
-    coordinates = [(x['longitude'], x['latitude']) for x in checkpoints]
-
     if args.backend == BROUTER:
         routing_backend = Brouter
     elif args.backend == VALHALLA:
@@ -50,9 +50,14 @@ if __name__ == '__main__':
 
     cantons = {i['code']: Canton(i['code'], cache) for i in checkpoints}
 
-    routing_service = routing_backend(cache)
-
-    result_matrix = routing_service.matrix(coordinates)
+    for coordinates, nogos in Scrambler(checkpoints, cantons).calc_matrices():
+        routing_service = routing_backend(cache, nogos=nogos)
+        result_matrix = routing_service.matrix(coordinates)
+        if not os.path.exists('results'):
+            os.mkdir('results')
+        nogos_string = ','.join(map(lambda x: x.code, nogos)) if nogos else ''
+        filename = 'distance_matrix.json' if not nogos_string else f'distance_matrix-{nogos_string}.json'
+        with open(f'results/{filename}', "w") as f:
+            json.dump(result_matrix, f)
 
     cache.save()
-    print(json.dumps(result_matrix))

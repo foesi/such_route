@@ -1,7 +1,6 @@
 import geojson
 from OSMPythonTools.overpass import Overpass
-from geojson import MultiPolygon
-from shapely import Polygon, LineString
+from shapely import Polygon, LineString, MultiPolygon
 
 
 def create_shapely_polygons(geometry):

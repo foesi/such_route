@@ -1,7 +1,7 @@
 import csv
 
-from geojson import MultiPolygon
 from matplotlib import pyplot as plt, patches
+from shapely import MultiPolygon
 
 from caching import Cache
 from data import Canton
@@ -62,3 +62,6 @@ if __name__ == '__main__':
         line = Canton.line_from_geojson(route_file)
         cantons[code].intersect(line)
         draw_line_and_polygon(line, cantons[code].polygon)
+
+    for code, path in test_cases:
+        test(code, path)
