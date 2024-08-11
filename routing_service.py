@@ -1,7 +1,7 @@
 from caching import Cache
 
 
-DEST_COORDS = '(7.44411, 46.9469)'
+DEST_COORDS = (7.44411, 46.9469)
 # two days in seconds
 UNREACHABLE = 172800
 
@@ -28,17 +28,16 @@ class RoutingService:
     def _calc_matrix_from_coordinates(self, coordinates):
         result = {}
         for source in coordinates:
-            if str(source) not in result:
-                result[str(source)] = {}
+            if source not in result:
+                result[source] = {}
             for target in coordinates:
-                if source != target and str(source) != DEST_COORDS:
-                    result[str(source)][str(target)] = self._cache_or_connection(source[0], source[1], target[0],
-                                                                                 target[1])
+                if source != target and source != DEST_COORDS:
+                    result[source][target] = self._cache_or_connection(source[0], source[1], target[0], target[1])
 
         # make the time to reach any destination from the final destination Bundesplatz in bern very large, so it will
         # be the final destination for sure
         for unreachable_target in coordinates:
-            if str(unreachable_target) != DEST_COORDS:
-                result[DEST_COORDS][str(unreachable_target)] = UNREACHABLE
+            if unreachable_target != DEST_COORDS:
+                result[DEST_COORDS][unreachable_target] = UNREACHABLE
 
         return result

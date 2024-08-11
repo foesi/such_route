@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from itertools import permutations
 import pandas as pd
-import json
+import such_json as json
 
 import gurobipy as gp
 from gurobipy import GRB

@@ -1,7 +1,8 @@
 import argparse
 import csv
-import json
 import os
+import such_json as json
+
 
 from caching import Cache
 from data import Canton
