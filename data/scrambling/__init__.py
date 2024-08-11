@@ -21,7 +21,7 @@ class Scrambler:
 
     def calc_matrices(self):
         result = []
-        result_matrix = [self._dest, self._jura]
+        result_matrix = [self._jura]
         result_matrix.extend(map(lambda y: y[0], self._groups['1']))
         result_matrix.extend(map(lambda y: y[0], self._groups['2']))
         result_matrix.extend(map(lambda y: y[0], self._groups['3']))
@@ -29,6 +29,7 @@ class Scrambler:
         result_matrix.extend(map(lambda y: y[0], self._groups['5']))
         result_matrix.extend(map(lambda y: y[0], self._groups['6']))
         result_matrix.extend(map(lambda y: y[0], self._groups['7']))
+        result_matrix.append(self._dest)
         result.append((result_matrix, None))
 
         for elem1 in self._groups['1']:
@@ -38,7 +39,7 @@ class Scrambler:
                         for elem5 in self._groups['5']:
                             for elem6 in self._groups['6']:
                                 for elem7 in self._groups['7']:
-                                    result_matrix = [self._dest, self._jura]
+                                    result_matrix = [self._jura]
                                     nogos = []
                                     result_matrix.extend(
                                         map(lambda y: y[0], filter(lambda x: x != elem1, self._groups['1'])))
@@ -54,6 +55,7 @@ class Scrambler:
                                         map(lambda y: y[0], filter(lambda x: x != elem6, self._groups['6'])))
                                     result_matrix.extend(
                                         map(lambda y: y[0], filter(lambda x: x != elem7, self._groups['7'])))
+                                    result_matrix.append(self._dest)
                                     nogos.append(elem1[1])
                                     nogos.append(elem2[1])
                                     nogos.append(elem3[1])

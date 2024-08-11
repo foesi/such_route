@@ -6,3 +6,4 @@ matplotlib
 gurobipy
 folium
 seaborn
+pandas
