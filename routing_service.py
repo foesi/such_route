@@ -15,13 +15,13 @@ class RoutingService:
     def matrix(self, coordinates):
         raise NotImplementedError()
 
-    def _direct_connection(self, source_lon, source_lat, target_lon, target_lat):
+    def direct_connection(self, source_lon, source_lat, target_lon, target_lat):
         raise NotImplementedError()
 
     def _cache_or_connection(self, source_lon, source_lat, target_lon, target_lat):
         if cache_hit := self.cache.get((source_lon, source_lat), (target_lon, target_lat)):
             return cache_hit
-        result = self._direct_connection(source_lon, source_lat, target_lon, target_lat)
+        result = self.direct_connection(source_lon, source_lat, target_lon, target_lat)
         self.cache.set(result, (source_lon, source_lat), (target_lon, target_lat), self._nogos)
         return result
 
