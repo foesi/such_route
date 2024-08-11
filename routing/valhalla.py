@@ -10,7 +10,7 @@ class Valhalla(RoutingService):
     def matrix(self, coordinates):
         return self._calc_matrix_from_coordinates(coordinates)
 
-    def _direct_connection(self, source_lon, source_lat, target_lon, target_lat):
+    def direct_connection(self, source_lon, source_lat, target_lon, target_lat):
         json_request = {'locations': [{'lat': source_lat, 'lon': source_lon},
                                       {'lat': target_lat, 'lon': target_lon}],
                         'costing': 'bicycle'}
