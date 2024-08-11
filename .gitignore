@@ -8,3 +8,4 @@ results
 checkpoints_ordered.csv
 checkpoints_ordered.png
 swiss_cantons_map.html
+*.log

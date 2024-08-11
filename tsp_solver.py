@@ -174,7 +174,10 @@ class TspSolver:
                     m.addConstr(x[i, i] == 0)
 
             # Optimize model using lazy constraints to eliminate subtours
+            m.Params.LogToConsole = False
+            m.Params.LogFile = "gurobi.log"
             m.Params.LazyConstraints = 1
+            m.Params.Threads = 1
             cb = self._tspCallback(self.nodes, x)
             m.optimize(cb)
 
