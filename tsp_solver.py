@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 FINAL_DESTINATION = (7.44411, 46.9469)
 INDEX_OF_ARTIFICAL_NODE = 99
 
+
 class TspSolver:
     def __init__(self, data, importedDistance, euclidean=False):
         self.euclidean = euclidean
@@ -31,7 +32,8 @@ class TspSolver:
         self.checkpoints = self.determine_checkpoints_to_visit()
         self.nodes = [INDEX_OF_ARTIFICAL_NODE] + list(self.checkpoints.keys())
         # Retrieve the first key matching the value, or None if not found
-        self.index_of_final_destination = next((key for key, value in self.checkpoints.items() if value == FINAL_DESTINATION), None)
+        self.index_of_final_destination = next(
+            (key for key, value in self.checkpoints.items() if value == FINAL_DESTINATION), None)
         self.distances = self.augment_distance(importedDistance)
         self.model = gp.Model()
 
@@ -66,7 +68,8 @@ class TspSolver:
                     augmented_distance[node_i, node_j] = math.sqrt(
                         (pointJ[0] - pointI[0]) ** 2 + (pointJ[1] - pointI[1]) ** 2)
                     continue
-                augmented_distance[node_i, node_j] = distances[str(pointI)][str(pointJ)]
+                augmented_distance[node_i, node_j] = distances[str(
+                    pointI)][str(pointJ)]
         return augmented_distance
 
     class _tspCallback:
@@ -178,7 +181,7 @@ class TspSolver:
         with gp.Env() as env, gp.Model(env=env) as m:
             # Optimize model using lazy constraints to eliminate subtours
             m.Params.LogToConsole = False
-            m.Params.LogFile = "gurobi.log"                        
+            m.Params.LogFile = "gurobi.log"
             m.Params.LazyConstraints = 1
             m.Params.Threads = 1
             # Create variables
@@ -186,7 +189,8 @@ class TspSolver:
                           vtype=GRB.BINARY, name="e")
 
             # Ensure that Bern is final destination
-            m.addConstr(x[self.index_of_final_destination, INDEX_OF_ARTIFICAL_NODE] == 1)
+            m.addConstr(x[self.index_of_final_destination,
+                        INDEX_OF_ARTIFICAL_NODE] == 1)
 
             # Create degree 2 constraints
             for i in self.nodes:
@@ -210,8 +214,6 @@ class TspSolver:
 
             if rearranged_tour[0] == self.index_of_final_destination:
                 rearranged_tour = rearranged_tour[::-1]
-
-            #rearranged_tour = [i - 1 for i in rearranged_tour]
 
             # Calculate the cost of the tour
             tour_with_costs = {rearranged_tour[0]: 0}
@@ -248,7 +250,7 @@ if __name__ == "__main__":
         for idx, filename in enumerate(files):
             # Very dump speed up, because no better solution is found after the 1491th file
             # update if distance matrices change!
-            if idx > 1500:  
+            if idx > 1500:
                 break
 
             with open(f"{root}/" + filename, 'r') as file:
