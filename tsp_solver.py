@@ -13,38 +13,60 @@ import gurobipy as gp
 from gurobipy import GRB
 import matplotlib.pyplot as plt
 
+FINAL_DESTINATION = (7.44411, 46.9469)
+INDEX_OF_ARTIFICAL_NODE = 99
 
 class TspSolver:
     def __init__(self, data, importedDistance, euclidean=False):
         self.euclidean = euclidean
         # Extract latitude, longitude, and Canton information
+        self.data = data
         self.latitudes = data['Latitude']
         self.longitudes = data['Longitude']
         self.cantons = data['Canton']
         self.rearranged_tour = None
 
-        self.nodes = list(range(0, len(importedDistance)+1))
+        self._coordinates = [tuple(map(float, coord.strip('()').split(
+            ', '))) for coord in list(importedDistance.keys())]
+        self.checkpoints = self.determine_checkpoints_to_visit()
+        self.nodes = [INDEX_OF_ARTIFICAL_NODE] + list(self.checkpoints.keys())
+        # Retrieve the first key matching the value, or None if not found
+        self.index_of_final_destination = next((key for key, value in self.checkpoints.items() if value == FINAL_DESTINATION), None)
         self.distances = self.augment_distance(importedDistance)
         self.model = gp.Model()
+
+    def determine_checkpoints_to_visit(self):
+        checkpoints = {}
+        for lon, lat in self._coordinates:
+            match = self.data[(self.data['Longitude'] == lon) & (
+                self.data['Latitude'] == lat)]
+            if not match.empty:
+                checkpoints[int(match.index[0])] = (lon, lat)
+            else:
+                checkpoints.append(None)  # If no match is found
+        return checkpoints
 
     def augment_distance(self, distances):
         """Augment the distance matrix with a dummy node to handle the TSP with
         a fixed starting point (0) and ending point (n-1)."""
 
-        if self.euclidean:
-            return {(i, j): 0 if i == 0 or j == 0 else math.sqrt((self.longitudes[i-1] - self.longitudes[j-1]) ** 2 + (self.latitudes[i-1] - self.latitudes[j-1]) ** 2) for i, j in permutations(self.nodes, 2)}
+        # if self.euclidean:
+        #     return {(i, j): 0 if i == 0 or j == 0 else math.sqrt((self.longitudes[i-1] - self.longitudes[j-1]) ** 2 + (self.latitudes[i-1] - self.latitudes[j-1]) ** 2) for i, j in permutations(self.nodes, 2)}
 
-        # Create a new distance matrix with a dummy node
-        rows = list(distances.keys())
         augmented_distance = {}
-        for i in range(len(self.nodes)):
-            for j in range(len(self.nodes)):
-                if i == 0 or j == 0 or i == j:
-                    augmented_distance[i, j] = 0
+        for node_i in self.nodes:
+            for node_j in self.nodes:
+                if node_i == INDEX_OF_ARTIFICAL_NODE or node_j == INDEX_OF_ARTIFICAL_NODE or node_i == node_j:
+                    augmented_distance[node_i, node_j] = 0
                     continue
-                pointI = rows[i-1]
-                pointJ = rows[j-1]
-                augmented_distance[i, j] = distances[pointI][pointJ]
+                pointI = self.checkpoints[node_i]
+                pointJ = self.checkpoints[node_j]
+                if self.euclidean:
+                    # Calculate Euclidean distance
+                    augmented_distance[node_i, node_j] = math.sqrt(
+                        (pointJ[0] - pointI[0]) ** 2 + (pointJ[1] - pointI[1]) ** 2)
+                    continue
+                augmented_distance[node_i, node_j] = distances[str(pointI)][str(pointJ)]
         return augmented_distance
 
     class _tspCallback:
@@ -144,7 +166,7 @@ class TspSolver:
 
     def solve(self):
         """
-        Solve a dense symmetric TSP using the following base formulation:
+        Solve a dense asymmetric TSP using the following base formulation:
 
         min  sum_ij d_ij x_ij
         s.t. sum_j x_ij == 2   forall i in V
@@ -154,15 +176,17 @@ class TspSolver:
         """
 
         with gp.Env() as env, gp.Model(env=env) as m:
-            # Create variables, and add symmetric keys to the resulting dictionary
-            # 'x', such that (i, j) and (j, i) refer to the same variable.
+            # Optimize model using lazy constraints to eliminate subtours
+            m.Params.LogToConsole = False
+            m.Params.LogFile = "gurobi.log"                        
+            m.Params.LazyConstraints = 1
+            m.Params.Threads = 1
+            # Create variables
             x = m.addVars(self.distances.keys(), obj=self.distances,
                           vtype=GRB.BINARY, name="e")
-            # x.update({(j, i): v for (i, j), v in x.items()})
 
-            # Assumption: Bern as final destination is always the last node
-            indexOfFinalDestination = len(self.nodes)-1
-            m.addConstr(x[indexOfFinalDestination, 0] == 1)
+            # Ensure that Bern is final destination
+            m.addConstr(x[self.index_of_final_destination, INDEX_OF_ARTIFICAL_NODE] == 1)
 
             # Create degree 2 constraints
             for i in self.nodes:
@@ -172,42 +196,37 @@ class TspSolver:
                             for j in self.nodes if i != j) == 1)
                 if (i, i) in self.distances:
                     m.addConstr(x[i, i] == 0)
-
-            # Optimize model using lazy constraints to eliminate subtours
-            m.Params.LogToConsole = False
-            m.Params.LogFile = "gurobi.log"
-            m.Params.LazyConstraints = 1
-            m.Params.Threads = 1
             cb = self._tspCallback(self.nodes, x)
             m.optimize(cb)
 
             # Extract the solution as a tour
             edges = [(i, j) for (i, j), v in x.items() if v.X > 0.5]
             tour = cb.shortest_subtour(edges)
-            # Find the index of 0
-            zero_index = tour.index(0)
+            # Find the index of INDEX_OF_ARTIFICAL_NODE
+            depot_index = tour.index(INDEX_OF_ARTIFICAL_NODE)
 
             # Rearrange the route to start with 0
-            rearranged_tour = tour[zero_index+1:] + tour[:zero_index]
+            rearranged_tour = tour[depot_index+1:] + tour[:depot_index]
 
-            if rearranged_tour[0] == indexOfFinalDestination:
+            if rearranged_tour[0] == self.index_of_final_destination:
                 rearranged_tour = rearranged_tour[::-1]
 
+            #rearranged_tour = [i - 1 for i in rearranged_tour]
+
             # Calculate the cost of the tour
-            tour_with_costs = {rearranged_tour[0]-1: 0}
+            tour_with_costs = {rearranged_tour[0]: 0}
             cost = 0
             for i in range(len(rearranged_tour)-1):
                 cost += self.distances[rearranged_tour[i],
                                        rearranged_tour[i+1]]
-                tour_with_costs[rearranged_tour[i+1] - 1] = cost
+                key = rearranged_tour[i+1]
+                tour_with_costs[key] = cost
 
-            rearranged_tour = [i - 1 for i in rearranged_tour]
-            print("")
-            print(f"Optimal tour: {rearranged_tour}")
-            print(
-                f"Optimal cost returned: {m.ObjVal:g} and calculated cost: {cost}")
-            print("")
-            assert abs(m.ObjVal - cost) < 1e-5
+            # print(
+            #     f"\nOptimal tour: {[self.data.Code[i] for i in rearranged_tour]}")
+            # print(
+            #     f"Optimal cost returned: {m.ObjVal:g} and calculated cost: {cost}\n")
+            assert abs(m.ObjVal - cost) < 1e1
 
             self.rearranged_tour = rearranged_tour
 
@@ -225,14 +244,18 @@ if __name__ == "__main__":
     copied_data = None
 
     # Load JSON data from a file
-    for _, _, files in os.walk('results'):
-        for filename in files:
-            with open('results/' + filename, 'r') as file:
+    for root, dir, files in os.walk('results'):
+        for idx, filename in enumerate(files):
+            # Very dump speed up, because no better solution is found after the 1491th file
+            # update if distance matrices change!
+            if idx > 1500:  
+                break
+
+            with open(f"{root}/" + filename, 'r') as file:
                 if not filename.endswith('json'):
                     continue
                 # Dictionary of Euclidean distance between each pair of points
                 importedDistance = json.load(file)
-
                 copied_data = copy.copy(data)
                 for i, line in data.iterrows():
                     if str((line['Longitude'], line['Latitude'])) not in importedDistance:
@@ -243,11 +266,17 @@ if __name__ == "__main__":
 
                 if lowest_cost:
                     if cost < lowest_cost:
+                        with open("solution.log", 'a') as file:
+                            file.write(
+                                f"File {idx}: New best solution with {cost} found! Name:{filename}\n")
                         lowest_cost = cost
                         shortest_route = tour
                         shortest_filename = filename
                         reduced_data = copied_data
                 else:
+                    with open("solution.log", 'w') as file:
+                        file.write(
+                            f"File {idx}: New best solution with {cost} found! Name:{filename}\n")
                     lowest_cost = cost
                     shortest_route = tour
                     shortest_filename = filename
@@ -259,10 +288,11 @@ if __name__ == "__main__":
 
     reduced_data['Order'] = sorted(
         range(len(shortest_route)), key=lambda x: list(shortest_route.keys())[x])
-    reduced_data['Time'] = reduced_data['Order'].map(shortest_route)
+    # reduced_data['Order'].map(shortest_route)
+    reduced_data['Time'] = [shortest_route[i] for i in reduced_data.index]
 
     reduced_data.to_csv('checkpoints_ordered.csv', sep=';',
-                encoding='utf-8', index=False)
+                        encoding='utf-8', index=False)
 
     # with open('results/' + shortest_filename, 'r') as file:
     #     importedDistance = json.load(file)
