@@ -47,8 +47,6 @@ class TspSolver:
                 self.data['Latitude'] == lat)]
             if not match.empty:
                 checkpoints[int(match.index[0])] = [lon, lat]
-            else:
-                checkpoints.append(None)  # If no match is found
         return checkpoints
 
     def augment_distance(self, distances):
