@@ -13,27 +13,30 @@ import gurobipy as gp
 from gurobipy import GRB
 import matplotlib.pyplot as plt
 
+from data.station import NearestStation
+from caching import Cache
+
 FINAL_DESTINATION = (7.44411, 46.9469)
 INDEX_OF_ARTIFICAL_NODE = 99
 
 
 class TspSolver:
-    def __init__(self, data, importedDistance, euclidean=False):
+    def __init__(self, cache, data, importedDistance, euclidean=False):
         self.euclidean = euclidean
         # Extract latitude, longitude, and Canton information
         self.data = data
+        self.cache = cache
         self.latitudes = data['Latitude']
         self.longitudes = data['Longitude']
         self.cantons = data['Canton']
         self.rearranged_tour = None
 
-        self._coordinates = [tuple(map(float, coord.strip('()').split(
-            ', '))) for coord in list(importedDistance.keys())]
+        self._coordinates = list(importedDistance.keys())
         self.checkpoints = self.determine_checkpoints_to_visit()
         self.nodes = [INDEX_OF_ARTIFICAL_NODE] + list(self.checkpoints.keys())
         # Retrieve the first key matching the value, or None if not found
         self.index_of_final_destination = next(
-            (key for key, value in self.checkpoints.items() if value == FINAL_DESTINATION), None)
+            (key for key, value in self.checkpoints.items() if tuple(value) == FINAL_DESTINATION), None)
         self.distances = self.augment_distance(importedDistance)
         self.model = gp.Model()
 
@@ -43,7 +46,7 @@ class TspSolver:
             match = self.data[(self.data['Longitude'] == lon) & (
                 self.data['Latitude'] == lat)]
             if not match.empty:
-                checkpoints[int(match.index[0])] = (lon, lat)
+                checkpoints[int(match.index[0])] = [lon, lat]
             else:
                 checkpoints.append(None)  # If no match is found
         return checkpoints
@@ -61,15 +64,26 @@ class TspSolver:
                 if node_i == INDEX_OF_ARTIFICAL_NODE or node_j == INDEX_OF_ARTIFICAL_NODE or node_i == node_j:
                     augmented_distance[node_i, node_j] = 0
                     continue
-                pointI = self.checkpoints[node_i]
-                pointJ = self.checkpoints[node_j]
+                pointI = tuple(self.checkpoints[node_i])
+                pointJ = tuple(self.checkpoints[node_j])
                 if self.euclidean:
                     # Calculate Euclidean distance
                     augmented_distance[node_i, node_j] = math.sqrt(
                         (pointJ[0] - pointI[0]) ** 2 + (pointJ[1] - pointI[1]) ** 2)
                     continue
-                augmented_distance[node_i, node_j] = distances[str(
-                    pointI)][str(pointJ)]
+                augmented_distance[node_i, node_j] = distances[pointI][pointJ]
+
+        # Add the cost to the nearest station for each checkpoint
+        # save the cost to the nearest station in the last element of the tuple of each checkpoint (self.checkpoints)
+        if not self.euclidean:
+            for i in self.nodes:
+                if i == INDEX_OF_ARTIFICAL_NODE or i == self.index_of_final_destination:
+                    continue
+                lon, lat = self.checkpoints[i]
+                augmented_distance[INDEX_OF_ARTIFICAL_NODE, i] = NearestStation(
+                    self.cache, near_point=(lat, lon)).get_cost()
+                self.checkpoints[i].append(
+                    augmented_distance[INDEX_OF_ARTIFICAL_NODE, i])
         return augmented_distance
 
     class _tspCallback:
@@ -215,9 +229,9 @@ class TspSolver:
             if rearranged_tour[0] == self.index_of_final_destination:
                 rearranged_tour = rearranged_tour[::-1]
 
-            # Calculate the cost of the tour
-            tour_with_costs = {rearranged_tour[0]: 0}
-            cost = 0
+            # Calculate the cost of the tour starting with duration to the first checkpoint from the nearest station
+            cost = self.checkpoints[rearranged_tour[0]][2]
+            tour_with_costs = {rearranged_tour[0]: cost}
             for i in range(len(rearranged_tour)-1):
                 cost += self.distances[rearranged_tour[i],
                                        rearranged_tour[i+1]]
@@ -245,12 +259,15 @@ if __name__ == "__main__":
     shortest_matrix = None
     copied_data = None
 
+    cache = Cache('.such_route_cache', "valhalla")
+    cache.load()
+
     # Load JSON data from a file
     for root, dir, files in os.walk('results'):
         for idx, filename in enumerate(files):
             # Very dump speed up, because no better solution is found after the 1491th file
             # update if distance matrices change!
-            if idx > 1500:
+            if idx > 5000:
                 break
 
             with open(f"{root}/" + filename, 'r') as file:
@@ -260,10 +277,10 @@ if __name__ == "__main__":
                 importedDistance = json.load(file)
                 copied_data = copy.copy(data)
                 for i, line in data.iterrows():
-                    if str((line['Longitude'], line['Latitude'])) not in importedDistance:
+                    if (line['Longitude'], line['Latitude']) not in importedDistance:
                         copied_data.drop(index=i, inplace=True)
 
-                solver = TspSolver(copied_data, importedDistance)
+                solver = TspSolver(cache, copied_data, importedDistance)
                 tour, cost = solver.solve()
 
                 if lowest_cost:
