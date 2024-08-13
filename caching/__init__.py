@@ -1,6 +1,8 @@
 import os
 import pickle
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Tuple
+
+from shapely import LineString
 
 
 class Cache:
@@ -33,7 +35,7 @@ class Cache:
             key = key + ','.join(map(lambda x: x.code, cantons))
         return key
 
-    def get(self, start: (float, float), dest: (float, float), cantons=None) -> Optional[int]:
+    def get(self, start: (float, float), dest: (float, float), cantons=None) -> Optional[Tuple[int, float, LineString]]:
         """
         Get a cache value from the given parameters.
         :param start: start coordinates: tuple of (lon, lat)
@@ -46,7 +48,7 @@ class Cache:
             return self._cache[key]
         return None
     
-    def get_all(self, start: (float, float), dest: (float, float)) -> Iterable[int]:
+    def get_all(self, start: (float, float), dest: (float, float)) -> Iterable[Tuple[int, float, LineString]]:
         """
         Get all the cache hits independently from the avoided cantons.
         :param start: start coordinates: tuple of (lon, lat)
@@ -58,7 +60,7 @@ class Cache:
             if key.startswith(key_template):
                 yield self._cache[key]
     
-    def set(self, value: int, start: (float, float), dest: (float, float), cantons=None):
+    def set(self, value: (int, float, LineString), start: (float, float), dest: (float, float), cantons=None):
         """
         Set the key value pair in the cache
         :param value: time between start end destination

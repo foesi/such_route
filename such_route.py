@@ -51,6 +51,8 @@ if __name__ == '__main__':
 
     cantons = {i['code']: Canton(i['code'], cache) for i in checkpoints}
 
+    cache.save()
+
     for coordinates, nogos in Scrambler(checkpoints, cantons).calc_matrices():
         routing_service = routing_backend(cache, nogos=nogos)
         result_matrix = routing_service.matrix(coordinates)
