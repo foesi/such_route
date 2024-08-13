@@ -56,4 +56,4 @@ class Valhalla(RoutingService):
         assert len(result['trip']['legs']) == 1
         decoded_route = decode(result['trip']['legs'][0]['shape'])
         route = shapely.LineString(decoded_route)
-        return int(result['trip']['summary']['time']), float(result['trip']['summary']['distance']), route
+        return int(result['trip']['summary']['time']), float(result['trip']['summary']['length']), route
