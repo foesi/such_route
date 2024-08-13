@@ -223,14 +223,18 @@ if __name__ == "__main__":
     cache = Cache('.such_route_cache', "valhalla")
     cache.load()
 
+    stations = {}
+
+    for index, row in data.iterrows():
+        station_position = None
+        checkpoint_position = (row['Latitude'], row['Longitude'])
+        if row['Station_Lat'] and row['Station_Lon']:
+            station_position = (row['Station_Lat'], row['Station_Lon'])
+        stations[checkpoint_position] = NearestStation(cache, checkpoint_position, station_position)
+
     # Load JSON data from a file
     for root, dir, files in os.walk('results'):
         for idx, filename in enumerate(files):
-            # Very dump speed up, because no better solution is found after the 1491th file
-            # update if distance matrices change!
-            if idx > 5000:
-                break
-
             with open(f"{root}/" + filename, 'r') as file:
                 if not filename.endswith('json'):
                     continue
