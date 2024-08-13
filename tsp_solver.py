@@ -20,11 +20,12 @@ INDEX_OF_ARTIFICAL_NODE = 99
 
 
 class TspSolver:
-    def __init__(self, cache, data, importedDistance, euclidean=False):
+    def __init__(self, cache, stations, data, importedDistance, euclidean=False):
         self.euclidean = euclidean
         # Extract latitude, longitude, and Canton information
         self.data = data
         self.cache = cache
+        self.stations = stations
         self.latitudes = data['Latitude']
         self.longitudes = data['Longitude']
         self.cantons = data['Canton']
@@ -74,8 +75,7 @@ class TspSolver:
                 if i == INDEX_OF_ARTIFICAL_NODE or i == self.index_of_final_destination:
                     continue
                 lon, lat = self.checkpoints[i]
-                augmented_distance[INDEX_OF_ARTIFICAL_NODE, i] = NearestStation(
-                    self.cache, near_point=(lat, lon)).get_cost()
+                augmented_distance[INDEX_OF_ARTIFICAL_NODE, i] = self.stations[(lat, lon)].get_cost()
                 self.checkpoints[i].append(
                     augmented_distance[INDEX_OF_ARTIFICAL_NODE, i])
         return augmented_distance
@@ -233,7 +233,7 @@ if __name__ == "__main__":
         stations[checkpoint_position] = NearestStation(cache, checkpoint_position, station_position)
 
     # Load JSON data from a file
-    for root, dir, files in os.walk('results'):
+    for root, _, files in os.walk('results'):
         for idx, filename in enumerate(files):
             with open(f"{root}/" + filename, 'r') as file:
                 if not filename.endswith('json'):
@@ -245,7 +245,7 @@ if __name__ == "__main__":
                     if (line['Longitude'], line['Latitude']) not in importedDistance:
                         copied_data.drop(index=i, inplace=True)
 
-                solver = TspSolver(cache, copied_data, importedDistance)
+                solver = TspSolver(cache, stations, copied_data, importedDistance)
                 tour, cost = solver.solve()
 
                 if lowest_cost:
@@ -258,6 +258,7 @@ if __name__ == "__main__":
                         shortest_filename = filename
                         reduced_data = copied_data
                 else:
+                    # initialise data with first matrix
                     with open("solution.log", 'w') as file:
                         file.write(
                             f"File {idx}: New best solution with {cost} found! Name:{filename}\n")

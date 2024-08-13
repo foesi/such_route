@@ -1,28 +1,28 @@
-"Latitude";"Longitude";"Group";"Code";"Canton";"Comment"
-46.958250;8.567944;"1";"CH-UR";"Uri";"300m of gravel roads"
-47.150889;8.789083;"1";"CH-SZ";"Schwytz";"Egger badi"
-46.772500;8.276972;"1";"CH-OW";"Obwalden";"be aware the road to Frutt is an alternating one-way street"
-46.965611;8.329139;"1";"CH-NW";"Nidwalden";""
-47.171185;8.133401;"2";"CH-LU";"Luzern";"Seepark Schenkon"
-47.373439;8.660323;"2";"CH-ZH";"Zürich";"300m of gravel then pontoon, the water is 1m below the platform, take a string"
-46.913204;9.167908;"2";"CH-GL";"Glaris";"Cheers!"
-47.172936;8.504399;"2";"CH-ZG";"Zug";""
-46.548822;8.277713;"2";"CH-BE";"Bern";"Oberaar Berghaus road is free for cyclist, no need to wait for green."
-46.887528;7.352194;"3";"CH-FR";"Fribourg";"little chalet,10m  left of the bridge"
-47.169347;7.670655;"3";"CH-SO";"Solothurn";"100m of a forest road"
-47.553734;7.590690;"4";"CH-BS";"Basel-Stadt";""
-47.425167;7.903899;"4";"CH-BL";"Basel-Landschaft";""
-47.677181;8.610678;"4";"CH-SH";"Schaffhausen";""
-47.430041;9.515868;"5";"CH-AR";"Ausserrhoden";"no cellular network, but no need to wait tracker confirmation"
-47.286366;9.428860;"5";"CH-AI";"Innerrhoden";""
-47.422416;9.391675;"6";"CH-SG";"St. Gallen";"100m of gravel road"
-46.776256;9.231395;"6";"CH-GR";"Graubünden";"Castrisch Brunnen"
-47.269361;8.211500;"6";"CH-AG";"Aargau";""
-47.675328;9.047376;"6";"CH-TG";"Thurgau";""
-46.567278;8.785194;"6";"CH-TI";"Ticino";"2km of gravel road"
-46.667207;6.317178;"6";"CH-VD";"Vaud";"200m of grass"
-46.964767;6.571174;"7";"CH-NE";"Neuchatel";"100m of gravel road"
-46.209030;6.164628;"7";"CH-GE";"Geneve";""
-46.477352;8.387045;"7";"CH-VS";"Valais";""
-47.365333;7.166833;"8";"CH-JU";"Jura";"Maison du Tourisme"
-46.946900;7.444110;"0";"CH-BE";"Bundesplatz Bern";"final destination"
+"Latitude";"Longitude";"Group";"Code";"Canton";"Comment";"Station_Lat";"Station_Lon"
+46.958250;8.567944;"1";"CH-UR";"Uri";"300m of gravel roads";;
+47.150889;8.789083;"1";"CH-SZ";"Schwytz";"Egger badi";;
+46.772500;8.276972;"1";"CH-OW";"Obwalden";"be aware the road to Frutt is an alternating one-way street";;
+46.965611;8.329139;"1";"CH-NW";"Nidwalden";"";;
+47.171185;8.133401;"2";"CH-LU";"Luzern";"Seepark Schenkon";;
+47.373439;8.660323;"2";"CH-ZH";"Zürich";"300m of gravel then pontoon, the water is 1m below the platform, take a string";;
+46.913204;9.167908;"2";"CH-GL";"Glaris";"Cheers!";;
+47.172936;8.504399;"2";"CH-ZG";"Zug";"";;
+46.548822;8.277713;"2";"CH-BE";"Bern";"Oberaar Berghaus road is free for cyclist, no need to wait for green.";;
+46.887528;7.352194;"3";"CH-FR";"Fribourg";"little chalet,10m  left of the bridge";;
+47.169347;7.670655;"3";"CH-SO";"Solothurn";"100m of a forest road";;
+47.553734;7.590690;"4";"CH-BS";"Basel-Stadt";"";;
+47.425167;7.903899;"4";"CH-BL";"Basel-Landschaft";"";;
+47.677181;8.610678;"4";"CH-SH";"Schaffhausen";"";;
+47.430041;9.515868;"5";"CH-AR";"Ausserrhoden";"no cellular network, but no need to wait tracker confirmation";;
+47.286366;9.428860;"5";"CH-AI";"Innerrhoden";"";;
+47.422416;9.391675;"6";"CH-SG";"St. Gallen";"100m of gravel road";;
+46.776256;9.231395;"6";"CH-GR";"Graubünden";"Castrisch Brunnen";;
+47.269361;8.211500;"6";"CH-AG";"Aargau";"";;
+47.675328;9.047376;"6";"CH-TG";"Thurgau";"";;
+46.567278;8.785194;"6";"CH-TI";"Ticino";"2km of gravel road";;
+46.667207;6.317178;"6";"CH-VD";"Vaud";"200m of grass";;
+46.964767;6.571174;"7";"CH-NE";"Neuchatel";"100m of gravel road";;
+46.209030;6.164628;"7";"CH-GE";"Geneve";"";;
+46.477352;8.387045;"7";"CH-VS";"Valais";"";;
+47.365333;7.166833;"8";"CH-JU";"Jura";"Maison du Tourisme";;
+46.946900;7.444110;"0";"CH-BE";"Bundesplatz Bern";"final destination";;
