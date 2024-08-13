@@ -11,7 +11,6 @@ import such_json as json
 
 import gurobipy as gp
 from gurobipy import GRB
-import matplotlib.pyplot as plt
 
 from data.station import NearestStation
 from caching import Cache
@@ -52,9 +51,6 @@ class TspSolver:
     def augment_distance(self, distances):
         """Augment the distance matrix with a dummy node to handle the TSP with
         a fixed starting point (0) and ending point (n-1)."""
-
-        # if self.euclidean:
-        #     return {(i, j): 0 if i == 0 or j == 0 else math.sqrt((self.longitudes[i-1] - self.longitudes[j-1]) ** 2 + (self.latitudes[i-1] - self.latitudes[j-1]) ** 2) for i, j in permutations(self.nodes, 2)}
 
         augmented_distance = {}
         for node_i in self.nodes:
@@ -150,35 +146,6 @@ class TspSolver:
                     <= len(tour) - 1
                 )
 
-    def draw_tsp_solution(self):
-        # Create the plot
-        plt.figure(figsize=(10, 8))
-        plt.scatter(self.latitudes, self.longitudes, c='blue', marker='o')
-
-        # Draw edges:
-        for i in range(len(self.rearranged_tour)-1):
-            cur = self.rearranged_tour[i]
-            nex = self.rearranged_tour[i+1]
-            # k- bedeutet schwarz, durchgezogene Linie mit Stärke (lw) gleich 1
-            plt.plot([self.latitudes[cur], self.latitudes[nex]], [
-                self.longitudes[cur], self.longitudes[nex]], 'k-', lw=1)
-
-        # Annotate each point with its Canton name
-        for i in range(len(self.cantons)):
-            plt.text(self.latitudes[i] + 0.01, self.longitudes[i] +
-                     0.01, self.cantons[i], fontsize=9, ha='left')
-
-        # Set the title and labels
-        plt.title('Canton Locations')
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
-
-        # Show grid for better readability
-        plt.grid(True)
-
-        # Show the plot
-        plt.savefig('checkpoints_ordered.png')
-
     def solve(self):
         """
         Solve a dense asymmetric TSP using the following base formulation:
@@ -236,10 +203,6 @@ class TspSolver:
                 key = rearranged_tour[i+1]
                 tour_with_costs[key] = cost
 
-            # print(
-            #     f"\nOptimal tour: {[self.data.Code[i] for i in rearranged_tour]}")
-            # print(
-            #     f"Optimal cost returned: {m.ObjVal:g} and calculated cost: {cost}\n")
             assert abs(m.ObjVal - cost) < 1e1
 
             self.rearranged_tour = rearranged_tour
@@ -311,10 +274,3 @@ if __name__ == "__main__":
     reduced_data.to_csv('checkpoints_ordered.csv', sep=';',
                         encoding='utf-8', index=False)
 
-    # with open('results/' + shortest_filename, 'r') as file:
-    #     importedDistance = json.load(file)
-    #
-    #     solver = TspSolver(data, importedDistance)
-    #     solver.solve()
-    #
-    #     solver.draw_tsp_solution()
