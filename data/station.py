@@ -12,7 +12,7 @@ RADIUS = 20
 
 class NearestStation:
     def __init__(self, cache: Cache, near_point: Tuple[float, float] = None,
-                 position: Optional[Tuple[float, float]] = None, routing_algorithm = None):
+                 position: Optional[Tuple[float, float]] = None, routing_algorithm=None):
         self._cache = cache
         self._position = position
         self._near_point = near_point
