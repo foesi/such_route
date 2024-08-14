@@ -34,7 +34,8 @@ class NearestStation:
                 for elem in result.elements():
                     coords = elem.geometry().coordinates
                     try:
-                        cost = routing.direct_connection(self._near_point[1], self._near_point[0], coords[0], coords[1])
+                        cost, _, _ = routing.cache_or_connection(self._near_point[1], self._near_point[0], coords[0],
+                                                                 coords[1])
                     except KeyError:
                         continue
                     if not self._cost:
@@ -44,16 +45,17 @@ class NearestStation:
                         self._cost = cost
                         self._position = (coords[0], coords[1])
                 cache.set_generic(f'station:{near_point[0]},{near_point[1]}', self._position)
-                cache.set_generic(f'station_cost:{near_point[0]},{near_point[1]}', self._cost)
+                cache.set_generic(f'station_cost:{self._position[0]},{self._position[1]}', self._cost)
                 cache.save()
         if not self._cost:
-            if cache_hit := cache.get_generic(f'station_cost:{near_point[0]},{near_point[1]}'):
+            if cache_hit := cache.get_generic(f'station_cost:{self._position[0]},{self._position[1]}'):
                 self._cost = cache_hit
             else:
                 routing = routing_algorithm if routing_algorithm else Valhalla(cache)
-                self._cost = routing.direct_connection(self._near_point[1], self._near_point[0], self._position[0],
-                                                       self._position[1])
-                cache.set_generic(f'station_cost:{near_point[0]},{near_point[1]}', self._cost)
+                cost, _, _ = routing.direct_connection(self._near_point[1], self._near_point[0], self._position[1],
+                                                       self._position[0])
+                self._cost = cost
+                cache.set_generic(f'station_cost:{self._position[0]},{self._position[1]}', self._cost)
                 cache.save()
 
     def get_cost(self):
