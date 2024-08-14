@@ -30,13 +30,14 @@ class TspSolver:
         self.longitudes = data['Longitude']
         self.cantons = data['Canton']
         self.rearranged_tour = None
+        self.cost = {}
 
         self._coordinates = list(importedDistance.keys())
         self.checkpoints = self.determine_checkpoints_to_visit()
         self.nodes = [INDEX_OF_ARTIFICAL_NODE] + list(self.checkpoints.keys())
         # Retrieve the first key matching the value, or None if not found
         self.index_of_final_destination = next(
-            (key for key, value in self.checkpoints.items() if tuple(value) == FINAL_DESTINATION), None)
+            (key for key, value in self.checkpoints.items() if value == FINAL_DESTINATION), None)
         self.distances = self.augment_distance(importedDistance)
         self.model = gp.Model()
 
@@ -46,7 +47,7 @@ class TspSolver:
             match = self.data[(self.data['Longitude'] == lon) & (
                 self.data['Latitude'] == lat)]
             if not match.empty:
-                checkpoints[int(match.index[0])] = [lon, lat]
+                checkpoints[int(match.index[0])] = (lon, lat)
         return checkpoints
 
     def augment_distance(self, distances):
@@ -59,8 +60,8 @@ class TspSolver:
                 if node_i == INDEX_OF_ARTIFICAL_NODE or node_j == INDEX_OF_ARTIFICAL_NODE or node_i == node_j:
                     augmented_distance[node_i, node_j] = 0
                     continue
-                pointI = tuple(self.checkpoints[node_i])
-                pointJ = tuple(self.checkpoints[node_j])
+                pointI = self.checkpoints[node_i]
+                pointJ = self.checkpoints[node_j]
                 if self.euclidean:
                     # Calculate Euclidean distance
                     augmented_distance[node_i, node_j] = math.sqrt(
@@ -76,8 +77,7 @@ class TspSolver:
                     continue
                 lon, lat = self.checkpoints[i]
                 augmented_distance[INDEX_OF_ARTIFICAL_NODE, i] = self.stations[(lat, lon)].get_cost()
-                self.checkpoints[i].append(
-                    augmented_distance[INDEX_OF_ARTIFICAL_NODE, i])
+                self.cost[i] = augmented_distance[INDEX_OF_ARTIFICAL_NODE, i]
         return augmented_distance
 
     class _tspCallback:
@@ -195,7 +195,7 @@ class TspSolver:
                 rearranged_tour = rearranged_tour[::-1]
 
             # Calculate the cost of the tour starting with duration to the first checkpoint from the nearest station
-            cost = self.checkpoints[rearranged_tour[0]][2]
+            cost = self.cost[rearranged_tour[0]]
             tour_with_costs = {rearranged_tour[0]: cost}
             for i in range(len(rearranged_tour)-1):
                 cost += self.distances[rearranged_tour[i],
@@ -228,7 +228,8 @@ if __name__ == "__main__":
     for index, row in data.iterrows():
         station_position = None
         checkpoint_position = (row['Latitude'], row['Longitude'])
-        if row['Station_Lat'] and row['Station_Lon']:
+        if row['Station_Lat'] and row['Station_Lon'] and not math.isnan(row['Station_Lat']) and not math.isnan(
+                row['Station_Lon']):
             station_position = (row['Station_Lat'], row['Station_Lon'])
         stations[checkpoint_position] = NearestStation(cache, checkpoint_position, station_position)
 
