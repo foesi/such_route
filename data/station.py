@@ -34,8 +34,8 @@ class NearestStation:
                 for elem in result.elements():
                     coords = elem.geometry().coordinates
                     try:
-                        cost, _, _ = routing.cache_or_connection(self._near_point[1], self._near_point[0], coords[0],
-                                                                 coords[1])
+                        cost = routing.cache_or_connection(self._near_point[1], self._near_point[0], coords[0],
+                                                           coords[1]).get_cost()
                     except KeyError:
                         continue
                     if not self._cost:

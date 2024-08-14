@@ -2,20 +2,21 @@ import os
 import pickle
 from typing import Optional, Iterable, Tuple
 
-from shapely import LineString
-
 
 class Cache:
     def __init__(self, filename, algorithm):
         self._filename = filename
         self._algorithm = algorithm
         self._cache = {}
+        self._dirname = self._filename + '_files'
     
     def load(self):
         print('load cache')
         if os.path.exists(self._filename):
             with open(self._filename, 'rb') as f:
                 self._cache = pickle.load(f)
+        if not os.path.exists(self._dirname):
+            os.mkdir(self._dirname)
                 
     def save(self):
         print('save cache')
@@ -35,7 +36,10 @@ class Cache:
             key = key + ','.join(map(lambda x: x.code, cantons))
         return key
 
-    def get(self, start: (float, float), dest: (float, float), cantons=None) -> Optional[Tuple[int, float, LineString]]:
+    def get_route_key(self, start: (float, float), dest: (float, float), cantons=None) -> str:
+        return self._get_key(start, dest, cantons) + ':route'
+
+    def get(self, start: (float, float), dest: (float, float), cantons=None) -> Optional[Tuple[int, float]]:
         """
         Get a cache value from the given parameters.
         :param start: start coordinates: tuple of (lon, lat)
@@ -48,7 +52,7 @@ class Cache:
             return self._cache[key]
         return None
     
-    def get_all(self, start: (float, float), dest: (float, float)) -> Iterable[Tuple[int, float, LineString]]:
+    def get_all(self, start: (float, float), dest: (float, float)) -> Iterable[Tuple[int, float]]:
         """
         Get all the cache hits independently from the avoided cantons.
         :param start: start coordinates: tuple of (lon, lat)
@@ -60,7 +64,7 @@ class Cache:
             if key.startswith(key_template):
                 yield self._cache[key]
     
-    def set(self, value: (int, float, LineString), start: (float, float), dest: (float, float), cantons=None):
+    def set(self, value: (int, float), start: (float, float), dest: (float, float), cantons=None):
         """
         Set the key value pair in the cache
         :param value: time between start end destination
@@ -88,3 +92,16 @@ class Cache:
         if key in self._cache:
             return self._cache[key]
         return None
+
+    def get_file(self, key):
+        filename = os.path.join(self._dirname, key)
+        if os.path.exists(filename):
+            with open(filename, 'rb') as f:
+                return pickle.load(f)
+
+        return None
+
+    def set_file(self, key, value):
+        filename = os.path.join(self._dirname, key)
+        with open(filename, 'wb') as f:
+            pickle.dump(value, f)

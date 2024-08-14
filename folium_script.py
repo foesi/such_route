@@ -51,8 +51,8 @@ class FoliumMap:
         for i in range(len(route)-1):
             cur = route[i]
             nex = route[i+1]
-            _, _, calculated_route = self.routing_service.cache_or_connection(cur['lon'], cur['lat'], nex['lon'],
-                                                                              nex['lat'])
+            calculated_route = self.routing_service.cache_or_connection(cur['lon'], cur['lat'], nex['lon'],
+                                                                        nex['lat']).get_route()
 
             route_coords = list(map(lambda y: [y[1].item(), y[0].item()], get_coordinates(calculated_route)))
 

@@ -15,6 +15,23 @@ class RoutingError(Exception):
     pass
 
 
+class RoutingResult:
+    def __init__(self, route_key, cache, cost, distance):
+        self._route_key = route_key
+        self._cache = cache
+        self._cost = cost
+        self._distance = distance
+
+    def get_cost(self):
+        return self._cost
+
+    def get_distance(self):
+        return self._distance
+
+    def get_route(self):
+        return self._cache.get_file(self._route_key)
+
+
 class RoutingService:
     def __init__(self, cache: Cache, ferries=False, nogos=None):
         self.cache = cache
@@ -48,21 +65,23 @@ class RoutingService:
     #         return time, distance, route
 
         # if there was no previous cache hit, calculate the shortest route
+        route_key = self.cache.get_route_key((source_lon, source_lat), (target_lon, target_lat), self.nogos)
         if cache_hit := self.cache.get((source_lon, source_lat), (target_lon, target_lat)):
-            (time, distance, route) = cache_hit
+            (time, distance) = cache_hit
         else:
             try:
                 (time, distance, route) = self.direct_connection(source_lon, source_lat, target_lon, target_lat)
+                self.cache.set_file(route_key, route)
             except RoutingError:
-                (time, distance, route) = UNREACHABLE, None, None
-            self.cache.set((time, distance, route), (source_lon, source_lat), (target_lon, target_lat), self.nogos)
+                (time, distance) = UNREACHABLE, None
+            self.cache.set((time, distance), (source_lon, source_lat), (target_lon, target_lat), self.nogos)
         # if self.nogos:
         #     # save cache for the calculation of routes with cantons to avoid
         #     self.cache.save()
         #     logger.info(
         #         f'calculate route while avoiding cantons '
         #         f'(start: {(source_lat, source_lon)}, dest: {(target_lat, target_lon)})')
-        return time, distance, route
+        return RoutingResult(route_key, self.cache, time, distance)
 
     def _calc_matrix_from_coordinates(self, coordinates):
         result = {}
@@ -71,7 +90,8 @@ class RoutingService:
                 result[source] = {}
             for target in coordinates:
                 if source != target and source != DEST_COORDS:
-                    result[source][target] = self.cache_or_connection(source[0], source[1], target[0], target[1])[0]
+                    result[source][target] = self.cache_or_connection(source[0], source[1], target[0], target[1])\
+                        .get_cost()
 
         # make the time to reach any destination from the final destination Bundesplatz in bern very large, so it will
         # be the final destination for sure
