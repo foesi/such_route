@@ -4,8 +4,7 @@ import json
 import requests
 import shapely
 
-from routing_service import RoutingService
-
+from routing_service import RoutingService, RoutingError
 
 inv = 1.0 / 1e6
 
@@ -45,13 +44,22 @@ class Valhalla(RoutingService):
     def direct_connection(self, source_lon, source_lat, target_lon, target_lat):
         json_data = {'locations': [{'lat': source_lat, 'lon': source_lon},
                                    {'lat': target_lat, 'lon': target_lon}],
+                     'costing_options': {
+                       'bicycle': {
+                         'bicycle_type': 'road',
+                       }
+                     },
                      'costing': 'bicycle'}
         if not self._use_ferries:
             # avoid _use_ferries if configured
-            json_data['costing_options'] = {'bicycle': {'use_ferry': 0}}
+            json_data['costing_options']['bicycle']['use_ferry'] = 0
 
         response = requests.post('http://localhost:8002/route', json=json_data)
         result = json.load(io.BytesIO(response.content))
+
+        if 'error' in result:
+            raise RoutingError(result['error'])
+
         # assumption is, there is only one leg. otherwise we have to handle the result differently
         assert len(result['trip']['legs']) == 1
         decoded_route = decode(result['trip']['legs'][0]['shape'])

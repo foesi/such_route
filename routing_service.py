@@ -11,6 +11,10 @@ DEST_COORDS = (7.44411, 46.9469)
 UNREACHABLE = 172800
 
 
+class RoutingError(Exception):
+    pass
+
+
 class RoutingService:
     def __init__(self, cache: Cache, ferries=False, nogos=None):
         self.cache = cache
@@ -47,7 +51,10 @@ class RoutingService:
         if cache_hit := self.cache.get((source_lon, source_lat), (target_lon, target_lat)):
             (time, distance, route) = cache_hit
         else:
-            (time, distance, route) = self.direct_connection(source_lon, source_lat, target_lon, target_lat)
+            try:
+                (time, distance, route) = self.direct_connection(source_lon, source_lat, target_lon, target_lat)
+            except RoutingError:
+                (time, distance, route) = UNREACHABLE, None, None
             self.cache.set((time, distance, route), (source_lon, source_lat), (target_lon, target_lat), self.nogos)
         # if self.nogos:
         #     # save cache for the calculation of routes with cantons to avoid
