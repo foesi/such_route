@@ -5,5 +5,4 @@ shapely
 matplotlib
 gurobipy
 folium
-seaborn
 pandas
