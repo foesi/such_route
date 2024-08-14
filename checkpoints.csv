@@ -1,5 +1,5 @@
 "Latitude";"Longitude";"Group";"Code";"Canton";"Comment";"Station_Lat";"Station_Lon"
-46.958250;8.567944;"1";"CH-UR";"Uri";"300m of gravel roads";;
+46.958250;8.567944;"1";"CH-UR";"Uri";"300m of gravel roads";46.958459;8.366564
 47.150889;8.789083;"1";"CH-SZ";"Schwytz";"Egger badi";;
 46.772500;8.276972;"1";"CH-OW";"Obwalden";"be aware the road to Frutt is an alternating one-way street";;
 46.965611;8.329139;"1";"CH-NW";"Nidwalden";"";;
@@ -7,7 +7,7 @@
 47.373439;8.660323;"2";"CH-ZH";"Zürich";"300m of gravel then pontoon, the water is 1m below the platform, take a string";;
 46.913204;9.167908;"2";"CH-GL";"Glaris";"Cheers!";;
 47.172936;8.504399;"2";"CH-ZG";"Zug";"";;
-46.548822;8.277713;"2";"CH-BE";"Bern";"Oberaar Berghaus road is free for cyclist, no need to wait for green.";;
+46.548822;8.277713;"2";"CH-BE";"Bern";"Oberaar Berghaus road is free for cyclist, no need to wait for green.";46.636839;8.593328
 46.887528;7.352194;"3";"CH-FR";"Fribourg";"little chalet,10m  left of the bridge";;
 47.169347;7.670655;"3";"CH-SO";"Solothurn";"100m of a forest road";;
 47.553734;7.590690;"4";"CH-BS";"Basel-Stadt";"";;
