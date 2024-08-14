@@ -63,7 +63,6 @@ class Canton:
     def intersect(self, polyline):
         # Check if the LineString intersects with the Polygon
         intersects = polyline.intersects(self.polygon)
-        print("Does the line intersect the polygon?", intersects)
         return bool(intersects)
 
 
