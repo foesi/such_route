@@ -53,6 +53,7 @@ class Valhalla(RoutingService):
         if not self._use_ferries:
             # avoid _use_ferries if configured
             json_data['costing_options']['bicycle']['use_ferry'] = 0
+        json_data['costing_options']['bicycle']['avoid_bad_surfaces'] = 0.6
 
         response = requests.post('http://localhost:8002/route', json=json_data)
         result = json.load(io.BytesIO(response.content))
