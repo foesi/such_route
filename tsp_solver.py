@@ -1,6 +1,7 @@
 import copy
 import logging
 import math
+import multiprocessing
 import os
 
 from collections import defaultdict
@@ -214,12 +215,6 @@ class TspSolver:
 if __name__ == "__main__":
     data = pd.read_csv('checkpoints.csv', sep=';', encoding='utf-8')
 
-    lowest_cost = None
-    shortest_route = None
-    shortest_filename = None
-    shortest_matrix = None
-    copied_data = None
-
     cache = Cache('.such_route_cache', "valhalla")
     cache.load()
 
@@ -233,50 +228,34 @@ if __name__ == "__main__":
             station_position = (row['Station_Lat'], row['Station_Lon'])
         stations[checkpoint_position] = NearestStation(cache, checkpoint_position, station_position)
 
-    # Load JSON data from a file
+    def solve_tsp(arguments):
+        directory, filename = arguments
+        with open(f"{directory}/" + filename, 'r') as f:
+            if not filename.endswith('json'):
+                return None, None
+            # Dictionary of Euclidean distance between each pair of points
+            imported_distance = json.load(f)
+            reduced_data = copy.copy(data)
+            for i, line in data.iterrows():
+                if (line['Longitude'], line['Latitude']) not in imported_distance:
+                    reduced_data.drop(index=i, inplace=True)
+
+            solver = TspSolver(cache, stations, reduced_data, imported_distance)
+            tour, cost = solver.solve()
+
+            reduced_data['Order'] = sorted(
+                range(len(tour)), key=lambda x: list(tour.keys())[x])
+            reduced_data['Time'] = [tour[i] for i in reduced_data.index]
+            return cost, reduced_data
+
+    results = []
     for root, _, files in os.walk('results'):
-        for idx, filename in enumerate(files):
-            with open(f"{root}/" + filename, 'r') as file:
-                if not filename.endswith('json'):
-                    continue
-                # Dictionary of Euclidean distance between each pair of points
-                importedDistance = json.load(file)
-                copied_data = copy.copy(data)
-                for i, line in data.iterrows():
-                    if (line['Longitude'], line['Latitude']) not in importedDistance:
-                        copied_data.drop(index=i, inplace=True)
+        with multiprocessing.Pool(multiprocessing.cpu_count() - 1) as p:
+            for (cost, result_data) in p.imap_unordered(solve_tsp, zip([root for _ in files], files)):
+                if cost and result_data is not None:
+                    results.append((cost, result_data))
 
-                solver = TspSolver(cache, stations, copied_data, importedDistance)
-                tour, cost = solver.solve()
+    results = sorted(results, key=lambda x: x[0])
 
-                if lowest_cost:
-                    if cost < lowest_cost:
-                        with open("solution.log", 'a') as file:
-                            file.write(
-                                f"File {idx}: New best solution with {cost} found! Name:{filename}\n")
-                        lowest_cost = cost
-                        shortest_route = tour
-                        shortest_filename = filename
-                        reduced_data = copied_data
-                else:
-                    # initialise data with first matrix
-                    with open("solution.log", 'w') as file:
-                        file.write(
-                            f"File {idx}: New best solution with {cost} found! Name:{filename}\n")
-                    lowest_cost = cost
-                    shortest_route = tour
-                    shortest_filename = filename
-                    reduced_data = copied_data
-
-    # the following code needs to b refactored to be more readable
-    # case 1: integrate the following code into the TspSolver class with a new method export_solution or similar
-    # case 2: create a new class to handle the export of the solution because we only neeed the best solution from our scrambler
-
-    reduced_data['Order'] = sorted(
-        range(len(shortest_route)), key=lambda x: list(shortest_route.keys())[x])
-    # reduced_data['Order'].map(shortest_route)
-    reduced_data['Time'] = [shortest_route[i] for i in reduced_data.index]
-
-    reduced_data.to_csv('checkpoints_ordered.csv', sep=';',
-                        encoding='utf-8', index=False)
+    results[0][1].to_csv('checkpoints_ordered.csv', sep=';', encoding='utf-8', index=False)
 
