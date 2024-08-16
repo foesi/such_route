@@ -48,21 +48,24 @@ class RoutingService:
         """
         This function returns the shortest distance for the given coordinates.
         It tries to get the distance from the cache, but calculates it otherwise.
-        :return: A tuple of the estimated time, distance, and shape for the route with the lowest cost
+        :return: A tuple of the estimated time, distance
         """
         # iterate over the shortest routes for this connection, ignoring the avoided cantons
         # if the route does not enter any cantons to avoid, this will be the shortest connection
-    # for (time, distance, route) in sorted(self.cache.get_all((source_lon, source_lat), (target_lon, target_lat)),
-    #                                       key=lambda x: x[0]):
-    #     # intersect the route with every nogo canton, if there is no intersection, cache the result
-    #     hit_nogos = map(lambda x: x.intersect(route), self.nogos)
-    #     if not any(hit_nogos):
-    #         if self.nogos:
-    #             self.cache.set((time, distance, route), (source_lon, source_lat), (target_lon, target_lat),
-    #                            self.nogos)
-    #             logger.info(
-    #                 f'reuse shortest route (start: {(source_lat, source_lon)}, dest: {(target_lat, target_lon)})')
-    #         return time, distance, route
+        for key, (time, distance) in sorted(self.cache.get_all((source_lon, source_lat), (target_lon, target_lat)),
+                                            key=lambda x: x[0]):
+            route = self.cache.get_file(key + ':route')
+            # intersect the route with every nogo canton, if there is no intersection, cache the result
+            hit_nogos = map(lambda x: x.intersect(route), self.nogos)
+            if not any(hit_nogos):
+                if self.nogos:
+                    self.cache.set((time, distance), (source_lon, source_lat), (target_lon, target_lat),
+                                   self.nogos)
+                    self.cache.set_file(self.cache.get_route_key((source_lon, source_lat), (target_lon, target_lat),
+                                                                 self.nogos), route)
+                    logger.info(
+                        f'reuse shortest route (start: {(source_lat, source_lon)}, dest: {(target_lat, target_lon)})')
+                return RoutingResult(key + ':route', self.cache, time, distance)
 
         # if there was no previous cache hit, calculate the shortest route
         route_key = self.cache.get_route_key((source_lon, source_lat), (target_lon, target_lat), self.nogos)
@@ -75,12 +78,12 @@ class RoutingService:
             except RoutingError:
                 (time, distance) = UNREACHABLE, None
             self.cache.set((time, distance), (source_lon, source_lat), (target_lon, target_lat), self.nogos)
-        # if self.nogos:
-        #     # save cache for the calculation of routes with cantons to avoid
-        #     self.cache.save()
-        #     logger.info(
-        #         f'calculate route while avoiding cantons '
-        #         f'(start: {(source_lat, source_lon)}, dest: {(target_lat, target_lon)})')
+        if self.nogos:
+            # save cache for the calculation of routes with cantons to avoid
+            self.cache.save()
+            logger.info(
+                f'calculate route while avoiding cantons '
+                f'(start: {(source_lat, source_lon)}, dest: {(target_lat, target_lon)})')
         return RoutingResult(route_key, self.cache, time, distance)
 
     def _calc_matrix_from_coordinates(self, coordinates):

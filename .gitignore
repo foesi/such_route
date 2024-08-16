@@ -9,3 +9,4 @@ checkpoints_ordered.csv
 checkpoints_ordered.png
 swiss_cantons_map.html
 *.log
+.such_route_cache_files

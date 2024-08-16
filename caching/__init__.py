@@ -33,7 +33,7 @@ class Cache:
         """
         key = f'{self._algorithm}:{start}:{dest}'
         if cantons:
-            key = key + ','.join(map(lambda x: x.code, cantons))
+            key = key + ':' + ','.join(map(lambda x: x.code, cantons))
         return key
 
     def get_route_key(self, start: (float, float), dest: (float, float), cantons=None) -> str:
@@ -52,7 +52,7 @@ class Cache:
             return self._cache[key]
         return None
     
-    def get_all(self, start: (float, float), dest: (float, float)) -> Iterable[Tuple[int, float]]:
+    def get_all(self, start: (float, float), dest: (float, float)) -> Tuple[str, Iterable[Tuple[int, float]]]:
         """
         Get all the cache hits independently from the avoided cantons.
         :param start: start coordinates: tuple of (lon, lat)
@@ -62,7 +62,7 @@ class Cache:
         key_template = self._get_key(start, dest)
         for key in self._cache:
             if key.startswith(key_template):
-                yield self._cache[key]
+                yield key, self._cache[key]
     
     def set(self, value: (int, float), start: (float, float), dest: (float, float), cantons=None):
         """
