@@ -15,13 +15,14 @@ class FoliumMap:
         self.avoid_cantons = []
         self.cache = Cache('.such_route_cache', VALHALLA)
         self.cache.load()
-        self.routing_service = Valhalla(self.cache)
 
         avoid_canton_codes = list(pd.read_csv('checkpoints.csv', delimiter=';')['Code'])
         for code in self.data['Code']:
             avoid_canton_codes.remove(code)
         for code in avoid_canton_codes:
             self.avoid_cantons.append(Canton(code, self.cache))
+
+        self.routing_service = Valhalla(self.cache, nogos=self.avoid_cantons)
 
     def create_map(self, output_file="swiss_cantons_map.html"):
         foliumColors = ['blue', 'darkgreen', 'cadetblue', 'lightgray', 'purple', 'orange',

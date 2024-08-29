@@ -44,11 +44,15 @@ class TspSolver:
 
     def determine_checkpoints_to_visit(self):
         checkpoints = {}
-        for lon, lat in self._coordinates:
-            match = self.data[(self.data['Longitude'] == lon) & (
-                self.data['Latitude'] == lat)]
-            if not match.empty:
-                checkpoints[int(match.index[0])] = (lon, lat)
+        try:
+            for lon, lat in self._coordinates:
+                match = self.data[(self.data['Longitude'] == lon) & (
+                    self.data['Latitude'] == lat)]
+                if not match.empty:
+                    checkpoints[int(match.index[0])] = (lon, lat)
+        except ValueError as e:
+            print(self._coordinates)
+            raise e
         return checkpoints
 
     def augment_distance(self, distances):

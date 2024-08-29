@@ -1,6 +1,10 @@
+import logging
 import os
 import pickle
 from typing import Optional, Iterable, Tuple
+
+
+logger = logging.getLogger(__name__)
 
 
 class Cache:
@@ -11,7 +15,7 @@ class Cache:
         self._dirname = self._filename + '_files'
     
     def load(self):
-        print('load cache')
+        logger.debug('load cache')
         if os.path.exists(self._filename):
             with open(self._filename, 'rb') as f:
                 self._cache = pickle.load(f)
@@ -19,7 +23,7 @@ class Cache:
             os.mkdir(self._dirname)
                 
     def save(self):
-        print('save cache')
+        logger.debug('save cache')
         with open(self._filename, 'wb') as f:
             pickle.dump(self._cache, f)
             

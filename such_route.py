@@ -1,5 +1,7 @@
 import argparse
 import csv
+import logging
+import multiprocessing
 import os
 import such_json as json
 
@@ -9,6 +11,9 @@ from data import Canton
 from data.scrambling import Scrambler
 from routing.brouter import Brouter
 from routing.valhalla import Valhalla
+from routing_service import DEST_COORDS, UNREACHABLE
+
+logger = logging.getLogger(__name__)
 
 
 # backends
@@ -19,6 +24,10 @@ if __name__ == '__main__':
     '''
     This script creates a distance matrix between given checkpoints defined by latitude and longitude
     '''
+
+    logging.basicConfig(level=logging.INFO)
+    logger.info('Started')
+
     parser = argparse.ArgumentParser(description='Creates distance matrices for the SUCH route')
 
     parser.add_argument('-f', '--filename', type=str,
@@ -54,8 +63,40 @@ if __name__ == '__main__':
     cache.save()
 
     for coordinates, nogos in Scrambler(checkpoints, cantons).calc_matrices():
+        logger.info(f'calculate new matrix (avoided cantons: {", ".join([c.code for c in nogos])})')
         routing_service = routing_backend(cache, nogos=nogos)
-        result_matrix = routing_service.matrix(coordinates)
+        result_matrix = {}
+
+        def get_connection(arguments):
+            source, target = arguments
+            if source != target and source != DEST_COORDS:
+                return source, target, routing_service.cache_or_connection(source[0], source[1], target[0],
+                                                                           target[1]).get_cost()
+            else:
+                return None, None, None
+
+        with multiprocessing.Pool(multiprocessing.cpu_count() - 1) as p:
+            arguments = []
+            for source in coordinates:
+                for target in coordinates:
+                    arguments.append((source, target))
+            for (source, target, cost) in p.imap_unordered(get_connection, arguments):
+                if source and target:
+                    if source not in result_matrix:
+                        result_matrix[source] = {}
+                    result_matrix[source][target] = cost
+
+        # make the time to reach any destination from the final destination Bundesplatz in bern very large, so it will
+        # be the final destination for sure
+        if DEST_COORDS not in result_matrix:
+            result_matrix[DEST_COORDS] = {}
+        for unreachable_target in coordinates:
+            if unreachable_target != DEST_COORDS:
+                result_matrix[DEST_COORDS][unreachable_target] = UNREACHABLE
+
+        # save cache after every produced matrix
+        cache.save()
+
         if not os.path.exists('results'):
             os.mkdir('results')
         nogos_string = ','.join(map(lambda x: x.code, nogos)) if nogos else ''

@@ -7,7 +7,7 @@ from OSMPythonTools.overpass import Overpass
 from shapely import LineString, MultiLineString
 
 from caching import Cache
-from routing_service import RoutingService, RoutingError
+from routing_service import RoutingService, RoutingError, UNREACHABLE
 
 inv = 1.0 / 1e6
 
@@ -54,10 +54,7 @@ class Valhalla(RoutingService):
 
             overpass = Overpass(endpoint='https://overpass.kumi.systems/api/')
             result = overpass.query(
-                f'rel["ISO3166-2"="{canton.code}"];'
-                f'way(r);'
-                f'way[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|'
-                f'residential|living_street|service|(motorway|trunk|primary|secondary)_link)$"](around:0)({min_lat},{min_lon},{max_lat},{max_lon});out geom;',
+                f'way[highway]({min_lat},{min_lon},{max_lat},{max_lon});out geom;',
                 out='json', timeout=6000)
             intersection_points = []
             for street in result.elements():
@@ -67,6 +64,9 @@ class Valhalla(RoutingService):
                 else:
                     line = LineString(geometry)
                 intersections = shapely.intersection(border, line)
+                if not intersections:
+                    continue
+                intersection_coords = []
                 if intersections.geom_type == 'Point':
                     intersection_coords = [intersections.coords]
                 elif intersections.geom_type == 'MultiPoint':
@@ -83,9 +83,6 @@ class Valhalla(RoutingService):
         for canton in self.nogos:
             self.avoid_canton_locations[canton] = calc_avoided_locations(canton)
 
-    def matrix(self, coordinates):
-        return self._calc_matrix_from_coordinates(coordinates)
-
     def direct_connection(self, source_lon, source_lat, target_lon, target_lat):
         json_data = {'locations': [{'lat': source_lat, 'lon': source_lon},
                                    {'lat': target_lat, 'lon': target_lon}],
@@ -98,6 +95,7 @@ class Valhalla(RoutingService):
         if not self._use_ferries:
             # avoid _use_ferries if configured
             json_data['costing_options']['bicycle']['use_ferry'] = 0
+            json_data['costing_options']['bicycle']['ferry_cost'] = UNREACHABLE
         json_data['costing_options']['bicycle']['avoid_bad_surfaces'] = 0.8
         json_data['costing_options']['bicycle']['use_roads'] = 0.8
 

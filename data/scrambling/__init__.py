@@ -30,7 +30,7 @@ class Scrambler:
         result_matrix.extend(map(lambda y: y[0], self._groups['6']))
         result_matrix.extend(map(lambda y: y[0], self._groups['7']))
         result_matrix.append(self._dest)
-        result.append((result_matrix, None))
+        result.append((result_matrix, []))
 
         for elem1 in self._groups['1']:
             for elem2 in self._groups['2']:
